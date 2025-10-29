@@ -24,6 +24,7 @@
             [
               gnumake
               qemu
+              llvmPackages.bintools
             ];
 
         crossPackages =
