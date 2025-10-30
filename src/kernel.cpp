@@ -1,10 +1,6 @@
 #include "kernel.h"
 #include "common.h"
 
-typedef unsigned char uint8_t;
-typedef unsigned int uint32_t;
-typedef uint32_t size_t;
-
 extern char __bss[], __bss_end[], __stack_top[];
 
 extern "C"
@@ -28,16 +24,6 @@ extern "C"
                                "r"(a6), "r"(a7)
                              : "memory");
         return (struct sbiret){.error = a0, .value = a1};
-    }
-
-    void *memset(void *buf, char c, size_t n)
-    {
-        uint8_t *p = (uint8_t *)buf;
-        while (n--)
-        {
-            *p++ = c;
-        }
-        return buf;
     }
 
     void putchar(char ch)
