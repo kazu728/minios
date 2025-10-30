@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "common.h"
 
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
@@ -46,11 +47,8 @@ extern "C"
 
     void kernel_main(void)
     {
-        const char *s = "\n\nHello World!\n";
-        for (int i = 0; s[i] != '\0'; i++)
-        {
-            putchar(s[i]);
-        }
+        printf("\n\nHello %s\n", "World!");
+        printf("1 + 2 = %d, %x\n", 1 + 2, 0x1234abcd);
 
         for (;;)
         {
