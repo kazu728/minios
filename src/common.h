@@ -1,3 +1,5 @@
+#pragma once
+
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
@@ -6,7 +8,9 @@ typedef uint32_t size_t;
 typedef uint32_t paddr_t;
 typedef uint32_t vaddr_t;
 
-#define NULL ((void *)0)
+#ifdef __cplusplus
+#define NULL nullptr
+#endif
 #define align_up(value, align) __builtin_align_up(value, align)
 #define is_aligned(value, align) __builtin_is_aligned(value, align)
 #define offsetof(type, member) __builtin_offsetof(type, member)
