@@ -14,7 +14,7 @@ $OBJCOPY --set-section-flags .bss=alloc,contents -O binary shell.elf shell.bin
 $OBJCOPY -Ibinary -Oelf32-littleriscv shell.bin shell.bin.o
 
 $CC $CFLAGS -Isrc -Wl,-Tkernel.ld -Wl,-Map=kernel.map -o kernel.elf \
-    src/kernel.cpp src/common.cpp
+    src/kernel.cpp src/common.cpp shell.bin.o
 
 $QEMU -machine virt -bios default -nographic -serial mon:stdio --no-reboot \
     -kernel kernel.elf
