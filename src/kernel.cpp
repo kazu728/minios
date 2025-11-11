@@ -32,6 +32,12 @@ extern "C"
         sbi_call(ch, 0, 0, 0, 0, 0, 0, 1 /* Console Putchar */);
     }
 
+    long getchar(void)
+    {
+        struct sbiret ret = sbi_call(0, 0, 0, 0, 0, 0, 0, 2);
+        return ret.error;
+    }
+
     paddr_t alloc_pages(uint32_t n)
     {
         static paddr_t next_paddr = (paddr_t)__free_ram;
@@ -68,6 +74,11 @@ extern "C"
     }
 
     struct process procs[PROCS_MAX];
+
+    struct process *proc_a;
+    struct process *proc_b;
+    struct process *current_proc; // 現在実行中のプロセス
+    struct process *idle_proc;    // アイドルプロセス
 
     __attribute__((naked)) void switch_context(uint32_t *prev_sp __attribute__((unused)),
                                                uint32_t *next_sp __attribute__((unused)))
@@ -190,13 +201,55 @@ extern "C"
         return proc;
     }
 
+    void yield(void);
+
+    void handle_syscall(struct trap_frame *f)
+    {
+        switch (f->a3)
+        {
+        case SYS_EXIT:
+            printf("process %d exited\n", current_proc->pid);
+            current_proc->state = PROC_EXITED;
+            yield();
+            PANIC("unreachable");
+        case SYS_GETCHAR:
+            while (1)
+            {
+                long ch = getchar();
+                if (ch >= 0)
+                {
+                    f->a0 = ch;
+                    break;
+                }
+
+                yield();
+            }
+            break;
+        case SYS_PUTCHAR:
+            putchar(f->a0);
+            break;
+        default:
+            PANIC("unexpected syscall a3=%x\n", f->a3);
+        }
+    }
+
     void handle_trap(struct trap_frame *f __attribute__((unused)))
     {
         uint32_t scause = READ_CSR(scause);
         uint32_t stval = READ_CSR(stval);
         uint32_t user_pc = READ_CSR(sepc);
 
-        PANIC("unexpected trap scause=%x, stval=%x, sepc=%x\n", scause, stval, user_pc);
+        if (scause == SCAUSE_ECALL)
+        {
+            handle_syscall(f);
+            user_pc += 4;
+        }
+        else
+        {
+            PANIC("unexpected trap scause=%x, stval=%x, sepc=%x\n", scause, stval, user_pc);
+        }
+
+        WRITE_CSR(sepc, user_pc);
     }
 
     __attribute__((naked))
@@ -290,11 +343,6 @@ extern "C"
         for (int i = 0; i < 30000000; i++)
             __asm__ __volatile__("nop"); // 何もしない命令
     }
-
-    struct process *proc_a;
-    struct process *proc_b;
-    struct process *current_proc; // 現在実行中のプロセス
-    struct process *idle_proc;    // アイドルプロセス
 
     void yield(void)
     {
