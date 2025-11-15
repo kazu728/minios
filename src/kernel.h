@@ -47,6 +47,7 @@ extern "C"
 
 #define USER_BASE 0x1000000
 #define SSTATUS_SPIE (1 << 5)
+#define SSTATUS_SUM (1 << 18)
 
 #define SCAUSE_ECALL 8
 #define PROC_EXITED 2
@@ -103,7 +104,7 @@ extern "C"
         uint16_t flags;
         uint16_t index;
         struct virtq_used_elem ring[VIRTQ_ENTRY_NUM];
-    } __attribute__((packed));
+    };
 
     struct virtio_virtq
     {
@@ -113,7 +114,7 @@ extern "C"
         int queue_index;
         volatile uint16_t *used_index;
         uint16_t last_used_index;
-    } __attribute__((packed));
+    };
 
     struct virtio_blk_req
     {
@@ -123,6 +124,39 @@ extern "C"
         uint8_t data[512];
         uint8_t status;
     } __attribute__((packed));
+
+#define FILES_MAX 2
+#define DISK_MAX_SIZE align_up(sizeof(struct file) * FILES_MAX, SECTOR_SIZE)
+
+    struct tar_header
+    {
+        char name[100];
+        char mode[8];
+        char uid[8];
+        char gid[8];
+        char size[12];
+        char mtime[12];
+        char checksum[8];
+        char type;
+        char linkname[100];
+        char magic[6];
+        char version[2];
+        char uname[32];
+        char gname[32];
+        char devmajor[8];
+        char devminor[8];
+        char prefix[155];
+        char padding[12];
+        char data[]; // ヘッダに続くデータ領域を指す配列 (フレキシブル配列メンバ)
+    } __attribute__((packed));
+
+    struct file
+    {
+        bool in_use;     // このファイルエントリが使われているか
+        char name[100];  // ファイル名
+        char data[1024]; // ファイルの内容
+        size_t size;     // ファイルサイズ
+    };
 
 #ifdef __cplusplus
 }
